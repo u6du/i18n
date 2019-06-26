@@ -6,19 +6,28 @@ path = require('path')
 CONFIG = require './config'
 ROOT = path.resolve __dirname, ".."
 
+LANG = ['en','zh']
 lang_order = (lang)->
-    order = ['en','zh']
-    pos = order.indexOf(lang)
+    pos = LANG.indexOf(lang)
     if pos < 0
         pos - order.length
     return pos
 
-lang_title = {
+TITLE = {
     zh:"中文说明"
     en:"English Readme"
 }
 
 README = "readme.md"
+
+FOOT = {}
+
+do ->
+    for i in LANG
+        FOOT[i] = (fs.readFileSync(path.join(__dirname, "doc", i , "foot.md"))+"").trim()
+
+title_link = (title)=>
+    "* [#{title}](##{title.toLowerCase().replace(/\s/,"-")})"
 
 make = (dir)->
 
@@ -37,30 +46,57 @@ make = (dir)->
         "# #{CONFIG.PROJECT} "+dir+"\n"
     ]
     for i in li
-        title = lang_title[i]
-        txt.push "* [#{title}](##{title.toLowerCase().replace(/\s/,"-")})"
+        title = TITLE[i]
+        txt.push title_link(title)
 
     txt.push "\n---\n"
 
+    desc = {}
+
     for i in li
-        title = lang_title[i]
+        title = TITLE[i]
         txt.push "## #{title}\n"
         readme = fs.readFileSync(path.join(dir_doc, i , README))+""
+        desc[i] = readme.split("\n",1)[0]
         txt.push readme.trim()
-        foot = fs.readFileSync(path.join(__dirname, "doc", i , "foot.md"))+""
-        txt.push "\n"+foot.trim()
+        txt.push "\n"+FOOT[i]
         txt.push "\n---\n"
 
     txt.push CONFIG.FOOT
     fs.writeFileSync path.join(root, README), txt.join("\n")
-
+    return desc
 
 
 do =>
-    fs.readdir(
+    file_li = fs.readdirSync(
         ROOT
-        (err, file_li) =>
-            for i in file_li
-                make i
     )
+
+    desc_li = {}
+
+    for i in file_li
+        desc_li[i] = make i
+
+    git = []
+    txt = [
+        "# "+ CONFIG.INDEX+" code repository index / 代码库清单\n"
+    ]
+    for lang in LANG
+        txt.push title_link(TITLE[lang])
+
+    for lang in LANG
+        txt.push "\n---\n"
+        txt.push "## " + TITLE[lang] + "\n"
+        for k,v of desc_li
+            if v
+                txt.push "* [#{CONFIG.URL.split("://")[1]+k}](#{CONFIG.URL+k}) "+ v[lang]
+        txt.push "\n"+FOOT[lang]
+
+    txt.push "\n"+CONFIG.FOOT
+
+    fs.writeFileSync(
+        path.join(ROOT, CONFIG.INDEX, README)
+        txt.join("\n")
+    )
+
 
