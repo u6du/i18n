@@ -4,6 +4,7 @@ fs = require('fs')
 path = require('path')
 
 CONFIG = require './config'
+ROOT = path.resolve __dirname, ".."
 
 lang_order = (lang)->
     order = ['en','zh']
@@ -17,9 +18,13 @@ lang_title = {
     en:"English Readme"
 }
 
+README = "readme.md"
+
 make = (dir)->
-    dir_doc = path.join(dir, "doc")
-    readme = path.join(dir_doc, "zh","readme.md")
+
+    root = path.join ROOT, dir
+    dir_doc = path.join(root, "doc")
+    readme = path.join(dir_doc, "zh",README)
     if not fs.existsSync(readme)
         return
 
@@ -29,45 +34,31 @@ make = (dir)->
         return lang_order(a)-lang_order(b)
 
     txt = [
-        "# "+dir+"\n"
+        "# #{CONFIG.PROJECT} "+dir+"\n"
     ]
     for i in li
         title = lang_title[i]
-        txt.push "* [#{title}](##{title.toLowerCase()})"
+        txt.push "* [#{title}](##{title.toLowerCase().replace(/\s/,"-")})"
 
     txt.push "\n---\n"
 
     for i in li
         title = lang_title[i]
-        txt.push "## "+title
+        txt.push "## #{title}\n"
+        readme = fs.readFileSync(path.join(dir_doc, i , README))+""
+        txt.push readme.trim()
         txt.push "\n---\n"
 
     txt.push CONFIG.FOOT
-    console.log txt.join("\n")
-
+    fs.writeFileSync path.join(root, README), txt.join("\n")
 
 
 
 do =>
-    root = path.resolve __dirname, ".."
     fs.readdir(
-        root
+        ROOT
         (err, file_li) =>
             for i in file_li
-                make path.join(root,i)
+                make i
     )
-
-# googleTranslate = require('google-translate') require('./config').KEY.GOOGLE.TRANSLATE
-
-# text = 'I am using google translator to convert this text to spanish'
-# console.log("English :>",text)
-# googleTranslate.translate(
-#     text
-#     'zh'
-#     (err, translation) ->
-#         if err
-#             console.error(err)
-#             return
-#         console.log(">",translation.translatedText)
-# )
 

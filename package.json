@@ -5,6 +5,5 @@
   "author": "- <->",
   "license": "GPL",
   "dependencies": {
-    "google-translate": "^2.2.0"
   }
 }
