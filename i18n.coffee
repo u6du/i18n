@@ -47,6 +47,8 @@ make = (dir)->
         txt.push "## #{title}\n"
         readme = fs.readFileSync(path.join(dir_doc, i , README))+""
         txt.push readme.trim()
+        foot = fs.readFileSync(path.join(__dirname, "doc", i , "foot.md"))+""
+        txt.push "\n"+foot.trim()
         txt.push "\n---\n"
 
     txt.push CONFIG.FOOT
